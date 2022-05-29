@@ -24,7 +24,24 @@ Note, that lines `[1, 3] [2, 5]` and `[2, 5] [1, 3]` are equivalent. Also note, 
 - `[1, 3] [2,5]`
 - etc.
 
-The input is guaranteed to be in the corre
+The Python implementation should be considered default. It works in the following manner:
+1. Points are represented as (x, y) tuples.
+2. A dictionary is used to represent parents. When a point is loaded, a new dictionary entry is added: `parents[point] = point`. This means the point becomes its own parent.
+3. Both points from the loaded line are connected using the `connect` method.
+
+For the sake of completeness, bellow is pseudocode for connect and find_parent operations:
+```
+connect points p1 and p2:
+	parent_p1 = find_parent of p1
+	parent_p2 = find_parent of p2
+	set parent of parent_p2 to parent_p1
+
+find_parent of p:
+	current = p
+	while parent of curent is not current:
+		current = parrent of currect
+	return parent of current
+```
 ## Why
 Now would be a good time to talk about the why of this project. The **sole** purpose of this project is for me to learn basics of several interesting languages and create a sort of Rosetta stone that I can refer back to in the future.
 
