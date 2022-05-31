@@ -29,7 +29,7 @@ The Python implementation should be considered default. It works in the followin
 2. A dictionary is used to represent parents. When a point is loaded, a new dictionary entry is added: `parents[point] = point`. This means the point becomes its own parent.
 3. Both points from the loaded line are connected using the `connect` method.
 
-For the sake of completeness, bellow is pseudocode for connect and find_parent operations:
+For the sake of completeness, bellow is pseudocode for `connect` and `find_parent operations`:
 ```
 connect points p1 and p2:
 	parent_p1 = find_parent of p1
