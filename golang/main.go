@@ -4,8 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"regexp"
-	"strconv"
+	"strings"
 )
 
 type Point struct {
@@ -20,71 +19,92 @@ func (p *Point) Equals(other *Point) bool {
 	}
 }
 
+func (p *Point) ToString() string {
+	return fmt.Sprintf("[%d, %d]", p.x, p.y)
+}
+
 type UnionFind struct {
-	parents map[uint64]map[uint64]*Point
+	parents map[string]*Point
+	points  map[string]*Point
+}
+
+func NewUnionFind() *UnionFind {
+	return &UnionFind{
+		parents: make(map[string]*Point),
+		points:  make(map[string]*Point),
+	}
 }
 
 func (uf *UnionFind) AddNewPoint(p *Point) {
-	if _, okX := uf.parents[p.x]; okX {
-		if _, okY := uf.parents[p.x][p.y]; okY {
-			// the point already exists
-			return
-		}
+	if _, ok := uf.parents[p.ToString()]; ok {
+		// point already in union find
+		return
 	} else {
-		uf.parents[p.x] = make(map[uint64]*Point)
+		uf.parents[p.ToString()] = p
+		uf.points[p.ToString()] = p
 	}
-	uf.parents[p.x][p.y] = p
-}
-
-func (uf *UnionFind) getFromParents(p *Point) *Point {
-	if _, okX := uf.parents[p.x]; okX {
-		if _, okY := uf.parents[p.x][p.y]; okY {
-			return uf.parents[p.x][p.y]
-		}
-	}
-	return nil
 }
 
 func (uf *UnionFind) FindParent(p *Point) *Point {
 	current := p
-	parent := uf.getFromParents(current)
-	if parent == nil {
+	if parent, ok := uf.parents[current.ToString()]; !ok {
 		return nil
+	} else {
+		for !current.Equals(parent) {
+			current = parent
+			parent = uf.parents[parent.ToString()]
+		}
+		return parent
 	}
-	for !current.Equals(parent) {
-		current = parent
-	}
-	return parent
 }
 
 func (uf *UnionFind) Connect(p1 *Point, p2 *Point) {
 	parentP1 := uf.FindParent(p1)
 	parentP2 := uf.FindParent(p2)
-	if parentP1 == nil || parentP2 == nil {
+	if parentP1 == nil || parentP2 == nil || parentP1.Equals(parentP2) {
 		return
 	}
-	uf.parents[parentP2.x][parentP2.y] = parentP1
+	uf.parents[parentP2.ToString()] = parentP1
+}
+
+func (uf *UnionFind) GetConnectedComponents() map[string][]*Point {
+	result := make(map[string][]*Point)
+	for key, value := range uf.points {
+		parent := uf.FindParent(value)
+		parentStr := parent.ToString()
+		if v, ok := result[parentStr]; ok {
+			result[parentStr] = append(v, uf.points[key])
+		} else {
+			result[parentStr] = []*Point{uf.points[key]}
+		}
+	}
+	return result
 }
 
 func load() *UnionFind {
-	uf := &UnionFind{parents: make(map[uint64]map[uint64]*Point)}
+	uf := NewUnionFind()
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		s := scanner.Text()
-		re := regexp.MustCompile(`\d+`)
-		tmp := re.FindAllString(s, -1)
-		if len(tmp) != 4 {
+
+		// remove newlines and spaces
+		s = strings.ReplaceAll(strings.ReplaceAll(s, "\n", ""), " ", "")
+		if len(s) == 0 {
+			// skip empty lines
+			continue
+		}
+
+		// load numbers
+		var x1, y1, x2, y2 uint64
+		if n, err := fmt.Sscanf(s, "[%d,%d][%d,%d]", &x1, &y1, &x2, &y2); n != 4 || err != nil {
+			fmt.Println(err)
 			_, _ = fmt.Fprintf(os.Stderr, "error: line %s is in incorrect format", s)
 			os.Exit(-1)
 		}
-		var x1, y1, x2, y2 uint64
-		x1, _ = strconv.ParseUint(tmp[0], 10, 64)
-		y1, _ = strconv.ParseUint(tmp[1], 10, 64)
-		x2, _ = strconv.ParseUint(tmp[2], 10, 64)
-		y2, _ = strconv.ParseUint(tmp[3], 10, 64)
+
+		// construct points and register them in the unionfind
 		p1 := &Point{x: x1, y: y1}
 		p2 := &Point{x: x2, y: y2}
-		fmt.Printf("Loaded points P1=[%d, %d], P2=[%d, %d]\n", p1.x, p2.y, p2.x, p2.y)
 		uf.AddNewPoint(p1)
 		uf.AddNewPoint(p2)
 		uf.Connect(p1, p2)
@@ -93,5 +113,12 @@ func load() *UnionFind {
 }
 
 func main() {
-	_ = load()
+	uf := load()
+	components := uf.GetConnectedComponents()
+	for _, component := range components {
+		for _, point := range component {
+			fmt.Printf("%s ", point.ToString())
+		}
+		fmt.Println()
+	}
 }
