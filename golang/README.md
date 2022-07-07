@@ -9,7 +9,7 @@ Nonetheless, there were some hurdles:
 	- `val, ok := m[key]`, makes sense
 	- `val, _ := m[key]`, fine, very pythonic
 	- `_, ok := m[key]`, fine, very pythonic
-	- `_, _ = m[key]`, why? Ok, I get why. No new variable is created. But this still feels very inconsistent. That's what the error says. But the thing is, a variable *is* created, two of those, in fact. They are created by the callee, but they are *ignored* by the caller. From the perspective of semantics I would expect the results to be stored in special "ignored" variables and thrown away. Instead, Go pretends there is nothing to see and no variables created. Once again, this is a minor thing. I just think, it's a strange way to look at the ignored values.
+	- `_, _ = m[key]`, why the missing colon? Ok, I get why. No new variable is created. That's what the error says. But this still feels very inconsistent. The thing is, a variable *is* created, two of those, in fact. They are created by the callee, but they are *ignored* by the caller. Instead, Go pretends there is nothing to see and no variables created. Once again, this is a minor thing. I just think that semantically, it's a strange way to look at the ignored values.
 
 ## Map workaround
 I had several ideas to work around the map keys issue:
